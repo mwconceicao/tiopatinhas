@@ -16,6 +16,7 @@ from boto.exception import EC2ResponseError
 from itertools import chain
 from datetime import timedelta
 from datetime import datetime
+from hipchat import HipChat
 
 logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s %(message)s')
 logger = logging.getLogger("main")
@@ -111,6 +112,17 @@ class TPManager:
             except IOError:
                 self.logger.warn("Could not read user data file: %s. Will launch instances without user data.",
                                  user_data_file)
+
+        self.hipchat = self.conf.get("hipchat")
+
+    def notifyChat(self, message="", msg_color="normal", notify=False):
+        if self.hipchat['enabled']:
+            hc = HipChat(token=self.hipchat['auth_token'])
+            hc.message_room(self.hipchat['room_id'],
+                            self.hipchat['my_name'],
+                            message,
+                            color=self.hipchat["color_"+msg_color],
+                            notify=notify)
 
     def refresh(self):
         self.tapping_group = AutoScaleInfo(self.side_group, self.region)
@@ -425,6 +437,8 @@ class TPManager:
         self.start()
         self.previous_managed = 0
         self.logger.info("Starting Tio Patinhas")
+        self.notifyChat("I am running! (goodnews)")
+
         while self.started or self.managed_instances() > 0:
             try:
                 self.save_money()
@@ -445,6 +459,10 @@ class TPManager:
         self.logger.debug("Checking if needs to launch emergency instances")
         if self.started and self.previous_managed > 0 and self.live_or_emergency() == 0:
             self.logger.warn(">> market crashed! launching %s %s instances", self.previous_managed, self.emergency_type)
+            self.notifyChat("(scumbag) AWS Spot market crashed! (poo) launching %s %s instances"
+                            % (self.previous_managed, self.emergency_type),
+                            "high",
+                            True)
             self.buy(self.previous_managed)
             self.load_state()
 

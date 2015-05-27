@@ -18,5 +18,13 @@
     "lower_threshold": 2,
     "upper_threshold": 2,
     "tags": {},
-    "user_data_file": null
+    "user_data_file": null,
+    "hipchat": {
+        "enabled": false,
+        "auth_token": "my-api-token",
+        "my_name": "Tio Patinhas",
+        "room_id": 012346,
+        "color_normal": "green",
+        "color_high": "red"
+    }
 }
